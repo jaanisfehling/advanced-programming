@@ -5,3 +5,6 @@
 *.fls
 *.out
 .DS_Store
+*.run.xml
+*.bcf
+*.toc

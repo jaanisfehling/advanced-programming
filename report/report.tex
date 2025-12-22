@@ -54,29 +54,86 @@
 \clearpage
 
 
+\section{Glossary of the Haskell Type System}
+Before investigating kinds, we briefly explain the most important definitions in Haskell's type system and make example(s).
+\subsubsection*{Type}
+A type classifies values and expressions; it describes what kind of data something is and which operations are valid on it.
+\begin{lstlisting}
+    Int, Bool, Char
+    [Int]
+    int -> Bool
+\end{lstlisting}
+\subsubsection*{Type Signature}
+A type signature is an explicit annotation of an expression’s type.
+\begin{lstlisting}
+    not :: Bool -> Bool
+\end{lstlisting}
+\subsubsection*{Type Variable}
+A type variable is a placeholder for an unknown type, enabling polymorphism. Usually written \texttt{a}, \texttt{b}, \texttt{t}, etc.
+\begin{lstlisting}
+    id :: a -> a -- Here the type signature of "id" contains type variables
+\end{lstlisting}
+\subsubsection*{(Parametric) Polymorphism}
+Parametric polymorphism means code works uniformly for any type, without inspecting that type.
+\begin{lstlisting}
+    length :: [a] -> Int
+\end{lstlisting}
+
+
 
 \section{Kinds in Haskell}
-The functional programming language Haskell offers besides a classical typesystem a "typesystem of a typesystem", also called \textit{kinds} (i.e. kind of a type or type of a type). In GHCI, the interactive haskell interpreter, we can use the ":t" command to check the type of a previously declared variable:
+Haskell offers besides a classical typesystem a "typesystem of a typesystem", also called \textit{kinds} (i.e. kind of a type or type of a type). In GHCI, the interactive haskell interpreter, we can use the \texttt{:t} command to check the type of a previously declared variable:
 \begin{lstlisting}
     ghci> x = 42 :: Int
     ghci> :t x
     x :: Int
 \end{lstlisting}
-Now, the type "Int" has the following kind, which we can check using the ":k" command:
+Now, the type \texttt{Int} has the following kind, which we can check using the \texttt{:k} command:
 \begin{lstlisting}
     ghci> :k Int
     Int :: *
 \end{lstlisting}
-In contrast, we can check the kind of a type constructor such as "Maybe":
+In contrast, we can check the kind of a type constructor such as \texttt{Maybe}:
 \begin{lstlisting}
     ghci> :k Maybe
     Maybe :: * -> *
 \end{lstlisting}
+\texttt{Maybe} is a type constructor, meaning it takes an additional type as an argument, which will then produce the kind:
+\begin{lstlisting}
+    ghci> :k Maybe Int
+    Maybe Int :: *
+\end{lstlisting}
+More complex kinds are also possible:
+\begin{lstlisting}
+    ghci> :k Either
+    Either :: * -> * -> *
+    ghci> :k (->)
+    (->) :: * -> * -> *
+\end{lstlisting}
+
+\subsection{Higher-kinded Types}
+A higher-kinded type is a type constructor taking a type constructor as an argument:
+\begin{lstlisting}
+    ghci> :k Functor
+    Functor :: (* -> *) -> Constraint
+\end{lstlisting}
+Here \texttt{Constraint} is a typeclass constraint. We can test the \texttt{Functor} kind by supplying different types or type constructors:
+\begin{lstlisting}
+    ghci> :k Functor Maybe
+    Functor Maybe :: Constraint
+    ghci> :k Functor Int
+
+    <interactive>:1:9: error:
+        - Expected kind '* -> *', but 'Int' has kind '*'
+        - In the first argument of 'Functor', namely 'Int'
+        In the type 'Functor Int'
+\end{lstlisting}
 
 
-\section{Kinds and types in JavaScript}
+
+\section{Kinds and Types in JavaScript}
 % TODO
-\section{Kinds and types in F\#}
+\section{Kinds and Types in F\#}
 % TODO
 
 \section{Conclusion}

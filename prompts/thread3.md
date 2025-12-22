@@ -1,0 +1,1 @@
+I want to create a glossary of the most important definitions in haskells type system. Please make such a glossary. include atleast: type, typeclasse, type constructor, type constraint

@@ -62,6 +62,7 @@ A type classifies values and expressions; it describes what kind of data somethi
     Int, Bool, Char
     [Int]
     int -> Bool
+    Maybe Int
 \end{lstlisting}
 \subsubsection*{Type Signature}
 A type signature is an explicit annotation of an expression’s type.
@@ -78,7 +79,36 @@ Parametric polymorphism means code works uniformly for any type, without inspect
 \begin{lstlisting}
     length :: [a] -> Int
 \end{lstlisting}
-
+\subsubsection*{Type Constructor}
+A type constructor is something that builds new types from type parameters (a "type-level function").
+\begin{lstlisting}
+    [] :: Type -> Type
+    Maybe :: Type -> Type
+    Either :: Type -> Type -> Type
+\end{lstlisting}
+\subsubsection*{(Data) Constructor}
+A data constructor builds values, not types.
+\begin{lstlisting}
+    Just :: a -> Maybe a
+    Nothing :: Maybe a
+\end{lstlisting}
+\subsubsection*{Type Class}
+A type class defines a set of operations (methods) and laws that a type can implement. It’s like an interface/contract at the type level.
+\begin{lstlisting}
+    class Eq a where
+        (==) :: a -> a -> Bool
+\end{lstlisting}
+\subsubsection*{Type Constraint}
+A type constraint restricts a type variable to types that are instances of some type class(es). Written before \texttt{=>} in a type signature.
+\begin{lstlisting}
+    (==) :: Eq a => a -> a -> Bool
+    foo :: (Eq a, Show a) => a -> String
+\end{lstlisting}
+\subsubsection*{Constrained Polymorphism}
+When a function is polymorphic but only for types satisfying constraints (type classes), it’s constrained (often called ad-hoc polymorphism).
+\begin{lstlisting}
+    show :: Show a => a -> String
+\end{lstlisting}
 
 
 \section{Kinds in Haskell}
@@ -117,7 +147,7 @@ A higher-kinded type is a type constructor taking a type constructor as an argum
     ghci> :k Functor
     Functor :: (* -> *) -> Constraint
 \end{lstlisting}
-Here \texttt{Constraint} is a typeclass constraint. We can test the \texttt{Functor} kind by supplying different types or type constructors:
+Here \texttt{Constraint} is a type class (used as a type constraint). We can test the \texttt{Functor} kind by supplying different types or type constructors:
 \begin{lstlisting}
     ghci> :k Functor Maybe
     Functor Maybe :: Constraint
@@ -128,14 +158,43 @@ Here \texttt{Constraint} is a typeclass constraint. We can test the \texttt{Func
         - In the first argument of 'Functor', namely 'Int'
         In the type 'Functor Int'
 \end{lstlisting}
+Under the hood GHC, the Haskell Compiler, treats kinds as types, meaning internally mostly the same procedures are used to check the correctness of types and kinds.
+
+
+\subsection{Other Kinds}
+\subsubsection*{DataKinds}
+With \texttt{DataKinds}, constructors can be used as types.
+\begin{lstlisting}
+    {-# LANGUAGE DataKinds #-}
+    import Data.Kind (Type)
+
+    data Nat = Z | S Nat
+\end{lstlisting}
+Now, new types or type constructors are created for the constructors, prefixed by \texttt{'}:
+\begin{lstlisting}
+    Nat :: *
+    'Z :: Nat
+    'S :: Nat -> Nat
+\end{lstlisting}
+\subsubsection*{PolyKinds}
+With \texttt{PolyKinds}, GHC can infer kind-polymorphic definitions.
+\begin{lstlisting}
+    {-# LANGUAGE PolyKinds #-}
+    data Proxy (a :: k) = Proxy
+\end{lstlisting}
+Here \texttt{k} is a kind variable, and the constructor is kind-polymorphic:
+\begin{lstlisting}
+    Proxy :: forall k. k -> *
+\end{lstlisting}
+This is similar to polymorphic types, but at the kind level.
+
+
+\section{Kinds and Types in F\#}
+
 
 
 
 \section{Kinds and Types in JavaScript}
-% TODO
-\section{Kinds and Types in F\#}
-% TODO
-
 \section{Conclusion}
 
 

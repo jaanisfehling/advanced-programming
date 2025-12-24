@@ -147,7 +147,7 @@ A higher-kinded type is a type constructor taking a type constructor as an argum
     ghci> :k Functor
     Functor :: (* -> *) -> Constraint
 \end{lstlisting}
-Here \texttt{Constraint} is a type class (used as a type constraint). We can test the \texttt{Functor} kind by supplying different types or type constructors:
+Here \texttt{Constraint} is a the kind of type constraints. We can test the \texttt{Functor} kind by supplying different types or type constructors:
 \begin{lstlisting}
     ghci> :k Functor Maybe
     Functor Maybe :: Constraint
@@ -190,6 +190,16 @@ This is similar to polymorphic types, but at the kind level.
 
 
 \section{Kinds and Types in F\#}
+Haskells kind system is similar to the arity of type constructors in F\#. In F\#, generic type definitions are most similar to Haskell's type constructors and parametric polymorphism:
+\begin{lstlisting}
+    int // no parameters
+    'T option // one parameter
+    Result<'T, 'E> // two parameters
+\end{lstlisting}
+There is no distinct kind or type-of-types system, but different generic types take different number of type arguments. 
+
+Where F\# lacks in comparison to Haskell is higher-kinded types. There is no polymorphism over type constructors.
+
 
 
 

@@ -198,8 +198,18 @@ Haskells kind system is similar to the arity of type constructors in F\#. In F\#
 \end{lstlisting}
 There is no distinct kind or type-of-types system, but different generic types take different number of type arguments. 
 
-Where F\# lacks in comparison to Haskell is higher-kinded types. There is no polymorphism over type constructors.
+Where F\# lacks in comparison to Haskell is higher-kinded types. There is no polymorphism over type constructors, meaning you cannot, for example, write a generic map implementation of a \texttt{map} function for any type constructor. We can write the following in F\#:
+\begin{lstlisting}
+    let incList xs = List.map ((+) 1) xs
+    let incOption x = Option.map ((+) 1) x
+\end{lstlisting}
+But not:
+\begin{lstlisting}
+    let incAny (x : F<int>) = map ((+) 1) x
+\end{lstlisting}
+Generics in F\# only work for types, not type constructors. Furthermore, there is no equivalent to Haskell's DataKinds and PolyKinds.
 
+A Workaround that is usable in F\# is representing the higher-kinded type using a dictionary, 
 
 
 

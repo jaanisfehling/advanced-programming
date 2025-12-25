@@ -189,7 +189,7 @@ Here \texttt{k} is a kind variable, and the constructor is kind-polymorphic:
 This is similar to polymorphic types, but at the kind level.
 
 
-\section{Kinds and Types in F\#}
+\section{Kinds in F\#}
 Haskells kind system is similar to the arity of type constructors in F\#. In F\#, generic type definitions are most similar to Haskell's type constructors and parametric polymorphism:
 \begin{lstlisting}
     int // no parameters
@@ -198,7 +198,7 @@ Haskells kind system is similar to the arity of type constructors in F\#. In F\#
 \end{lstlisting}
 There is no distinct kind or type-of-types system, but different generic types take different number of type arguments. 
 
-Where F\# lacks in comparison to Haskell is higher-kinded types. There is no polymorphism over type constructors, meaning you cannot, for example, write a generic map implementation of a \texttt{map} function for any type constructor. We can write the following in F\#:
+Where F\# lacks in comparison to Haskell is higher-kinded types. There is no polymorphism over type constructors. We cannot express, at the type level, that a generic parameter is itself a type constructor of a particular arity (e.g. something that takes a type argument), in Haskell this is expressed and enforced by the kind system. We cannot, for example, write a generic implementation of a \texttt{map} function for any type unary type constructor. We can write the following in F\#:
 \begin{lstlisting}
     let incList xs = List.map ((+) 1) xs
     let incOption x = Option.map ((+) 1) x
@@ -209,12 +209,62 @@ But not:
 \end{lstlisting}
 Generics in F\# only work for types, not type constructors. Furthermore, there is no equivalent to Haskell's DataKinds and PolyKinds.
 
-A Workaround that is usable in F\# is representing the higher-kinded type using a dictionary, 
+A Workaround that is usable in F\# is representing the higher-kinded type using a generic type with two type variables, with the first type variable being a "witness" type, indicating what type constructor it is, for example \texttt{Option} or \texttt{List}, and the second type variable being the element type, for example \texttt{int}. The result is a type like \texttt{App<'F, 'T>}, which during runtime is just a boxed object. Because this is a runtime solution to a static typing problem, the construct does not enforce that the object contains the correct type specified in the witness type variable. An example code snippet:
+\begin{lstlisting}
+    // HKT encoding: "F applied to T"
+    type App<'F, 'T> = private App of obj
+
+    // Example tags
+    type OptionTag = class end
+    type ListTag = class end
+
+    module HKT =
+    let inline inj (x: 'Real) : App<'F,'T> = App (box x)
+    let inline prj (App o) : 'Real = unbox o
+
+    type Functor<'F> =
+    { Map : ('a -> 'b) -> App<'F,'a> -> App<'F,'b> }
+
+    // Instances
+    let optionFunctor =
+    { Map =
+        fun f fa ->
+            let x : option<_> = HKT.prj fa
+            HKT.inj (Option.map f x) }
+
+    let listFunctor =
+    { Map =
+        fun f fa ->
+            let x : list<_> = HKT.prj fa
+            HKT.inj (List.map f x) }
+\end{lstlisting}
+Here, the \texttt{inj} and \texttt{prj} functions allow to pack or unpack the acutal objects into the encoded representation (\texttt{App<'F, 'T>}).
+
+Another approach is to wrap values in an object that exposes the operations we need, such as \texttt{map} in our example. We create a common interface, for example an interface resembling functors:
+\begin{lstlisting}
+type IFunctor<'T> =
+    abstract Map<'U> : ('T -> 'U) -> IFunctor<'U>
+
+type OptionF<'T>(x: option<'T>) =
+    member _.Value = x
+    interface IFunctor<'T> with
+        member _.Map f = OptionF(Option.map f x) :> IFunctor<_>
+
+type ListF<'T>(x: list<'T>) =
+    member _.Value = x
+    interface IFunctor<'T> with
+        member _.Map f = ListF(List.map f x) :> IFunctor<_>
+\end{lstlisting}
+Usage of the wrapper objects:
+\begin{lstlisting}
+    let a : IFunctor<int> = OptionF(Some 1) :> IFunctor<_>
+    let b : IFunctor<string> = a.Map string
+\end{lstlisting}
+This approach is what would be used in standard object-oriented programming. One downside is that you have to wrap every type constructor with the interface, stacking abstractions such as Functor, Applicative and Monad like in Haskell is not possible without writing many interfaces. Additionally, you program against a interface (\texttt{IFunctor<'U>}), so you cannot statically know if it is \texttt{OptionF<'U>} or \texttt{ListF<'U>}.
 
 
 
-
-\section{Kinds and Types in JavaScript}
+\section{Kinds in JavaScript}
 \section{Conclusion}
 
 

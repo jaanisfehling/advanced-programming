@@ -1,0 +1,1 @@
+Make some small examples for use cases of haskell higher kind types

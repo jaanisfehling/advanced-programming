@@ -140,6 +140,7 @@ More complex kinds are also possible:
     ghci> :k (->)
     (->) :: * -> * -> *
 \end{lstlisting}
+Under the hood GHC, the Haskell Compiler, treats kinds as types, meaning internally mostly the same procedures are used to check the correctness of types and kinds.
 
 \subsection{Higher-kinded Types}
 A higher-kinded type is a type constructor taking a type constructor as an argument:
@@ -158,7 +159,22 @@ Here \texttt{Constraint} is a the kind of type constraints. We can test the \tex
         - In the first argument of 'Functor', namely 'Int'
         In the type 'Functor Int'
 \end{lstlisting}
-Under the hood GHC, the Haskell Compiler, treats kinds as types, meaning internally mostly the same procedures are used to check the correctness of types and kinds.
+Higher-kinded types allow the programmer to abstract over type constructors. For example, we can write a utility function that converts to elements implementing the \texttt{Show} typeclass to strings in any (data) structure implementing the \texttt{Functor} typeclass:
+\begin{lstlisting}
+    liftAndShow :: (Functor f, Show a) => f a -> f String
+    liftAndShow = fmap show
+\end{lstlisting}
+This works only with higher-kinded types because \texttt{Functor} needs a higher-kinded parameter:
+\begin{lstlisting}
+    class Functor (f :: * -> *) where
+        fmap :: (a -> b) -> f a -> f b
+\end{lstlisting}
+Another example is the function \texttt{sequence} that evaluates every action in a list of monads and collects the results:
+\begin{lstlisting}
+    sequence :: Monad m => [m a] -> m [a]
+\end{lstlisting}
+Here, \texttt{m} is higher-kinded: \texttt{m :: * -> *}.
+
 
 
 \subsection{Other Kinds}
@@ -263,11 +279,28 @@ Usage of the wrapper objects:
 This approach is what would be used in standard object-oriented programming. One downside is that you have to wrap every type constructor with the interface, stacking abstractions such as Functor, Applicative and Monad like in Haskell is not possible without writing many interfaces. Additionally, you program against a interface (\texttt{IFunctor<'U>}), so you cannot statically know if it is \texttt{OptionF<'U>} or \texttt{ListF<'U>}.
 
 
-
 \section{Kinds in JavaScript}
+JavaScript has also no kind system, it does not even have a static type system. To achieve kind-like reasoning, we can employ the same methods previously described for F\# in TypeScript. For the first variant using a generic type with two type variables, one being a "witness/tag" type and the other type variable being the element type, we can model it in TypeScript:
+\begin{lstlisting}
+    interface URItoKind<A> {
+        Array: Array<A>;
+        Option: Option<A>;
+    }
+    type URIS = keyof URItoKind<any>;
+
+    type Kind<URI extends URIS, A> = URItoKind<A>[URI];
+
+    interface Functor<URI extends URIS> {
+        readonly URI: URI;
+        map: <A, B>(fa: Kind<URI, A>, f: (a: A) => B) => Kind<URI, B>;
+    }
+
+    const arrayFunctor: Functor<"Array"> = {
+        URI: "Array",
+        map: (fa, f) => fa.map(f),
+    };
+\end{lstlisting}
 \section{Conclusion}
-
-
 
 \appendix
 \section{Supplementary Material}

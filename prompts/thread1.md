@@ -9,3 +9,7 @@ what is a typeclass constraint?
 what is a typeclass?
 
 is the definition of Functor a kind or type definition?
+
+all-in-all, what can you say about the kind system in haskell?
+
+does it mean greater programmer ergonomy?

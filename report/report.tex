@@ -112,7 +112,7 @@ When a function is polymorphic but only for types satisfying constraints (type c
 
 
 \section{Kinds in Haskell}
-Haskell offers besides a classical typesystem a "typesystem of a typesystem", also called \textit{kinds} (i.e. kind of a type or type of a type). In GHCI, the interactive haskell interpreter, we can use the \texttt{:t} command to check the type of a previously declared variable:
+Haskell offers besides a classical typesystem a "type system of a type system", also called \textit{kinds} (i.e. kind of a type or type of a type). In GHCI, the interactive haskell interpreter, we can use the \texttt{:t} command to check the type of a previously declared variable:
 \begin{lstlisting}
     ghci> x = 42 :: Int
     ghci> :t x
@@ -159,7 +159,7 @@ Here \texttt{Constraint} is a the kind of type constraints. We can test the \tex
         - In the first argument of 'Functor', namely 'Int'
         In the type 'Functor Int'
 \end{lstlisting}
-Higher-kinded types allow the programmer to abstract over type constructors. For example, we can write a utility function that converts to elements implementing the \texttt{Show} typeclass to strings in any (data) structure implementing the \texttt{Functor} typeclass:
+Higher-kinded types allow the programmer to abstract over type constructors, meaning we can write functions that work for any type constructor if the same kind (or arity). In other programming languages, we can only quantify over types, but not type constructors (taking types as arguments). A programmer can write a function that works for any \texttt{f :: * -> *} or even any \texttt{p :: * -> * -> *}. For example, we can write a utility function that converts to elements implementing the \texttt{Show} typeclass to strings in any (data) structure implementing the \texttt{Functor} typeclass:
 \begin{lstlisting}
     liftAndShow :: (Functor f, Show a) => f a -> f String
     liftAndShow = fmap show
@@ -276,11 +276,11 @@ Usage of the wrapper objects:
     let a : IFunctor<int> = OptionF(Some 1) :> IFunctor<_>
     let b : IFunctor<string> = a.Map string
 \end{lstlisting}
-This approach is what would be used in standard object-oriented programming. One downside is that you have to wrap every type constructor with the interface, stacking abstractions such as Functor, Applicative and Monad like in Haskell is not possible without writing many interfaces. Additionally, you program against a interface (\texttt{IFunctor<'U>}), so you cannot statically know if it is \texttt{OptionF<'U>} or \texttt{ListF<'U>}.
+This approach is what would be used in standard object-oriented programming. One downside is that you have to wrap every type constructor with the interface, stacking abstractions such as Functor, Applicative and Monad like in Haskell is not possible without writing many interfaces. Additionally, you program against a interface (\texttt{IFunctor<'U>}), so you cannot statically know if it is \texttt{OptionF<'U>} or \texttt{ListF<'U>}; you will program against the common functor interface, while in Haskell, you will preserve the type constructor's type. Because of this, this approach is not equivalent to Haskell's higher-kinded type system.
 
 
 \section{Kinds in JavaScript}
-JavaScript has also no kind system, it does not even have a static type system. To achieve kind-like reasoning, we can employ the same methods previously described for F\# in TypeScript. For the first variant using a generic type with two type variables, one being a "witness/tag" type and the other type variable being the element type, we can model it in TypeScript:
+JavaScript has also no kind system, it does not even have a static type system. To achieve higher-kind-like reasoning, we can employ the same methods previously described for F\# in TypeScript. For the first variant using a generic type with two type variables, one being a "witness/tag" type and the other type variable being the element type, we can model it in TypeScript:
 \begin{lstlisting}
     interface URItoKind<A> {
         Array: Array<A>;
@@ -300,7 +300,15 @@ JavaScript has also no kind system, it does not even have a static type system. 
         map: (fa, f) => fa.map(f),
     };
 \end{lstlisting}
+Here \texttt{Kind<URI, A>} represents the higher kinded type, where \texttt{URI} is a name to map the concrete type constructor, like \texttt{Array} or \texttt{Option} and \texttt{A} the element the type constructor is applied to. This gives us abstraction over type constructors, but requires some boilerplate that does not feel like native TypeScript.
+
+
+Also, we could use the second approach proposed for F\#, wrapping values in an object exposing the methods we need, such as \texttt{map}. Again, then we only program against a common interface instead of the true types, which makes this approach inferior to Haskell's higher-kind type system.
+
+
 \section{Conclusion}
+Haskell's kind system is similar to the arity of generics in other programming languages with the difference being that it is a fully-fletched type system for types. Also, it allows for higher-kinded types, which allows for polymorphism over type constructors, something that is not possible in the other languages. Replicating these abstractions in F\# and Typescript requires lots of boilerplate code and programmer discipline or comes with downsides such as losing the identity of container types. All-in-all, the kind system allows for better compile-time safety but is an advanced concept not directly obvious for programmers coming from other languages.
+
 
 \appendix
 \section{Supplementary Material}

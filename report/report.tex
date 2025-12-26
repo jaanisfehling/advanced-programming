@@ -45,9 +45,7 @@
 {\small Jaanis Fehling \quad --- \quad Universita di Pisa}\\[2ex]
 \end{center}
 
-\begin{abstract}
-% TODO: Add a short abstract here.
-\end{abstract}
+\vspace{96pt}
 
 % Use \csname to safely invoke the table-of-contents command
 \csname tableofcontents\endcsname
@@ -148,7 +146,7 @@ A higher-kinded type is a type constructor taking a type constructor as an argum
     ghci> :k Functor
     Functor :: (* -> *) -> Constraint
 \end{lstlisting}
-Here \texttt{Constraint} is a the kind of type constraints. We can test the \texttt{Functor} kind by supplying different types or type constructors:
+Here \texttt{Constraint} is the kind of type constraints. We can test the \texttt{Functor} kind by supplying different types or type constructors:
 \begin{lstlisting}
     ghci> :k Functor Maybe
     Functor Maybe :: Constraint
@@ -159,7 +157,7 @@ Here \texttt{Constraint} is a the kind of type constraints. We can test the \tex
         - In the first argument of 'Functor', namely 'Int'
         In the type 'Functor Int'
 \end{lstlisting}
-Higher-kinded types allow the programmer to abstract over type constructors, meaning we can write functions that work for any type constructor if the same kind (or arity). In other programming languages, we can only quantify over types, but not type constructors (taking types as arguments). A programmer can write a function that works for any \texttt{f :: * -> *} or even any \texttt{p :: * -> * -> *}. For example, we can write a utility function that converts to elements implementing the \texttt{Show} typeclass to strings in any (data) structure implementing the \texttt{Functor} typeclass:
+Higher-kinded types allow the programmer to abstract over type constructors, meaning we can write functions that work for any type constructor of the same kind (or arity). In other programming languages, we can only quantify over types, but not type constructors (taking types as arguments). A programmer can write a function that works for any \texttt{f :: * -> *} or even any \texttt{p :: * -> * -> *}. For example, we can write a utility function that converts to elements implementing the \texttt{Show} typeclass to strings in any (data) structure implementing the \texttt{Functor} typeclass:
 \begin{lstlisting}
     liftAndShow :: (Functor f, Show a) => f a -> f String
     liftAndShow = fmap show
@@ -206,15 +204,13 @@ This is similar to polymorphic types, but at the kind level.
 
 
 \section{Kinds in F\#}
-Haskells kind system is similar to the arity of type constructors in F\#. In F\#, generic type definitions are most similar to Haskell's type constructors and parametric polymorphism:
+In F\#, there is no distinct kind or type-of-types system, but different type constructors take different number of type arguments, meaning Haskell kinds are most similar to the arity of type constructors in F\#. Types and type constructors with different arities in F\#:
 \begin{lstlisting}
     int // no parameters
     'T option // one parameter
     Result<'T, 'E> // two parameters
 \end{lstlisting}
-There is no distinct kind or type-of-types system, but different generic types take different number of type arguments. 
-
-Where F\# lacks in comparison to Haskell is higher-kinded types. There is no polymorphism over type constructors. We cannot express, at the type level, that a generic parameter is itself a type constructor of a particular arity (e.g. something that takes a type argument), in Haskell this is expressed and enforced by the kind system. We cannot, for example, write a generic implementation of a \texttt{map} function for any type unary type constructor. We can write the following in F\#:
+Where F\# lacks in comparison to Haskell is higher-kinded types. There is no polymorphism over type constructors. We cannot express, at the type level, that a generic type parameter is itself a type constructor of a particular arity (e.g. something that takes a type argument), in Haskell this is expressed and enforced by the kind system. We cannot, for example, write a generic implementation of a \texttt{map} function for any unary type constructor. So, we can write the following in F\#:
 \begin{lstlisting}
     let incList xs = List.map ((+) 1) xs
     let incOption x = Option.map ((+) 1) x
@@ -225,7 +221,7 @@ But not:
 \end{lstlisting}
 Generics in F\# only work for types, not type constructors. Furthermore, there is no equivalent to Haskell's DataKinds and PolyKinds.
 
-A Workaround that is usable in F\# is representing the higher-kinded type using a generic type with two type variables, with the first type variable being a "witness" type, indicating what type constructor it is, for example \texttt{Option} or \texttt{List}, and the second type variable being the element type, for example \texttt{int}. The result is a type like \texttt{App<'F, 'T>}, which during runtime is just a boxed object. Because this is a runtime solution to a static typing problem, the construct does not enforce that the object contains the correct type specified in the witness type variable. An example code snippet:
+A Workaround that is usable in F\# is representing the higher-kinded type using a generic type with two type variables, with the first type variable being a "witness/tag" type, indicating what type constructor it is, for example \texttt{Option} or \texttt{List}, and the second type variable being the element type, for example \texttt{int}. The result is a type like \texttt{App<'F, 'T>}, which during runtime is just a boxed object. Because this is a runtime solution to a static typing problem, the construct does not enforce that the object contains the correct type specified in the witness type variable. An example code snippet:
 \begin{lstlisting}
     // HKT encoding: "F applied to T"
     type App<'F, 'T> = private App of obj
@@ -276,11 +272,11 @@ Usage of the wrapper objects:
     let a : IFunctor<int> = OptionF(Some 1) :> IFunctor<_>
     let b : IFunctor<string> = a.Map string
 \end{lstlisting}
-This approach is what would be used in standard object-oriented programming. One downside is that you have to wrap every type constructor with the interface, stacking abstractions such as Functor, Applicative and Monad like in Haskell is not possible without writing many interfaces. Additionally, you program against a interface (\texttt{IFunctor<'U>}), so you cannot statically know if it is \texttt{OptionF<'U>} or \texttt{ListF<'U>}; you will program against the common functor interface, while in Haskell, you will preserve the type constructor's type. Because of this, this approach is not equivalent to Haskell's higher-kinded type system.
+This approach is what would be used in standard object-oriented programming. One downside is that you have to wrap every type constructor with the interface; stacking abstractions such as Functor, Applicative and Monad like in Haskell is not possible without writing many interfaces. Additionally, you program against a interface (\texttt{IFunctor<'U>}), so you cannot statically know if it is \texttt{OptionF<'U>} or \texttt{ListF<'U>}, you will program against the common functor interface, while in Haskell, you will preserve the type constructor's type. Because of this, this approach is not equivalent to Haskell's higher-kinded type system.
 
 
 \section{Kinds in JavaScript}
-JavaScript has also no kind system, it does not even have a static type system. To achieve higher-kind-like reasoning, we can employ the same methods previously described for F\# in TypeScript. For the first variant using a generic type with two type variables, one being a "witness/tag" type and the other type variable being the element type, we can model it in TypeScript:
+JavaScript has also no kind system, it does not even have a static type system. To achieve higher-kind-like reasoning in TypeScript, we can employ the same methods previously described for F\#. For the first variant using a generic type with two type variables, one being a "witness/tag" type and the other type variable being the element type, we can model it in TypeScript:
 \begin{lstlisting}
     interface URItoKind<A> {
         Array: Array<A>;
@@ -300,7 +296,7 @@ JavaScript has also no kind system, it does not even have a static type system. 
         map: (fa, f) => fa.map(f),
     };
 \end{lstlisting}
-Here \texttt{Kind<URI, A>} represents the higher kinded type, where \texttt{URI} is a name to map the concrete type constructor, like \texttt{Array} or \texttt{Option} and \texttt{A} the element the type constructor is applied to. This gives us abstraction over type constructors, but requires some boilerplate that does not feel like native TypeScript.
+Here \texttt{Kind<URI, A>} represents the higher kinded type, where \texttt{URI} is a name to map the concrete type constructor, like \texttt{Array} or \texttt{Option} and \texttt{A} the element the type constructor is applied to. This gives us polymorphism over type constructors, but requires some boilerplate that does not feel like native TypeScript.
 
 
 Also, we could use the second approach proposed for F\#, wrapping values in an object exposing the methods we need, such as \texttt{map}. Again, then we only program against a common interface instead of the true types, which makes this approach inferior to Haskell's higher-kind type system.
@@ -311,7 +307,127 @@ Haskell's kind system is similar to the arity of generics in other programming l
 
 
 \appendix
-\section{Supplementary Material}
+\section{Appendix}
+\subsection{Prompts}
+The following prompts were used. A thread is a new chat that was openend with no message history. Each distinct prompt is terminated by a blank line.
+\subsubsection*{Thread 1}
+\begin{lstlisting}
+Can you explain kinds in Haskell?
+
+can you show me examples in code of kinds?
+
+why is type Int Int not possible?
+
+what is a typeclass constraint?
+
+what is a typeclass?
+
+is the definition of Functor a kind or type definition?
+
+all-in-all, what can you say about the kind system in haskell?
+
+does it mean greater programmer ergonomy?
+\end{lstlisting}
+\subsubsection*{Thread 2}
+\begin{lstlisting}
+Can you explain which analogue to haskell kinds exists in F#?
+
+If I remember correctly, the F# type constructor is more similar to the haskell typeclasses. That would mean there is no equivalent to kinds in f# at all
+
+okay is there a more fitting equivalent to f# generic types in haskell? Or is kinds the haskell version of generic types
+
+Is it true that haskell kinds are an abstract layer that allow the programmer to do type level programming, while in F# it is handled by the compiler?
+
+can you explain why F# has no higher-kinded types?
+\end{lstlisting}
+\subsubsection*{Thread 3}
+\begin{lstlisting}
+I want to create a glossary of the most important definitions in haskells type system. Please make such a glossary. include atleast: type, typeclasse, type constructor, type constraint
+\end{lstlisting}
+\subsubsection*{Thread 4}
+\begin{lstlisting}
+How does the Haskell compiler type check type level code using kinds?
+\end{lstlisting}
+\subsubsection*{Thread 5}
+\begin{lstlisting}
+Why are higher kinder types in Haskell, but not in Fsharp?
+
+What is not possible in Fsharp, that is possible in Haskell.
+
+"For any type constructor F<_>, give me a map" what does that mean
+\end{lstlisting}
+\subsubsection*{Thread 6}
+\begin{lstlisting}
+comparing haskell kinds to f#, what is supported and what is missing?
+
+what workaround is there for higher kinded types?
+
+in dictionary passing, is the type in a tuple/dictionary with the first value/key representing the type constructor and the second value representing the ?
+
+// HKT encoding: "F applied to T"
+type App<'F, 'T> = private App of obj
+// Example tags
+type OptionTag = class end
+type ListTag = class end
+module HKT =
+  let inline inj (x: 'Real) : App<'F,'T> = App (box x)
+  let inline prj (App o) : 'Real = unbox o
+type Functor<'F> =
+  { Map : ('a -> 'b) -> App<'F,'a> -> App<'F,'b> }
+// Instances
+let optionFunctor =
+  { Map =
+      fun f fa ->
+        let x : option<_> = HKT.prj fa
+        HKT.inj (Option.map f x) }
+let listFunctor =
+  { Map =
+      fun f fa ->
+        let x : list<_> = HKT.prj fa
+        HKT.inj (List.map f x) }
+can you explain this snippet step by step?
+
+can you explain the option "wrapping in interfaces"?
+
+is it true that the wrapping using interfaces variant is close to object oriented programming and is not possible exactly like this in haskell?
+
+are the HKT.inj and HKT.prj similar to haskells fmap?
+
+are HKT.inj and HKT.prj replacing the usage of haskells fmap?
+\end{lstlisting}
+\subsubsection*{Thread 7}
+\begin{lstlisting}
+There is no equivalent to Haskells kind system in JavaScript right? Can you ropose patterns or abstractions in JavaScript (e.g. type-encoding with TypeScript or runtime conventions) that approximate kind-like reasoning? I was previously doing the same thing for F#, and was using 1) a generic type with two type variables, a witness and a element type and 2) a OOP style approach using interfaces (for example a functor interface requiring a map method)
+
+In F# it was also possible to use interfaces for that kind of polymorphism. is it even correct?
+Here is a code snippet that was give to me:
+type IFunctor<'T> =
+abstract Map<'U> : ('T -> 'U) -> IFunctor<'U>
+type OptionF<'T>(x: option<'T>) =
+member _.Value = x
+interface IFunctor<'T> with
+member .Map f = OptionF(Option.map f x) :> IFunctor<>
+type ListF<'T>(x: list<'T>) =
+member _.Value = x
+interface IFunctor<'T> with
+member .Map f = ListF(List.map f x) :> IFunctor<>
+
+is it also possible to have such an approach in typescript?
+\end{lstlisting}
+\subsubsection*{Thread 8}
+\begin{lstlisting}
+Make some small examples for use cases of haskell higher kind types
+
+what is higher kinded polymorphism?
+
+okay but in the examples it was never full polymorphism over the all type constructors of a certain kind, but the type constructor was always constraint. that sounds a lot like OOP interfaces
+\end{lstlisting}
+
+
+\subsection{Correctness}
+The Haskell code snippets were checked by re-running them in the interpreter locally and the author posseses enough domain knowledge to verify the claims made. The F\# and Javascript snippets and explanations were verified by comparing against real libraries, TypeShape for F\# and fp-ts for TypeScript.
+
+
 
 \printbibliography
 
